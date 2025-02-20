@@ -142,6 +142,15 @@ if opcion == "Ingresar datos manualmente":
 
 elif opcion == "Subir archivo CSV o XLS":
     # --- Subir archivo ---
+    st.write("""
+    **Instrucciones para el archivo:**
+    - El archivo debe ser de tipo **CSV** o **XLS**.
+    - Debe contener las siguientes columnas: 
+        - **TCM**: Toneladas Caña Molida
+        - **Rendimiento**: Rendimiento en kg/TCM
+        - **Toneladas de Jugo**: Toneladas de jugo obtenidas
+    """)
+    
     uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
 
     if uploaded_file is not None:

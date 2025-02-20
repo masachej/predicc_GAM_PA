@@ -1,15 +1,9 @@
-import subprocess
-
-# Actualizar pygam y establecer una versión compatible de numpy
-subprocess.run(["pip", "install", "--upgrade", "pygam"], check=True)
-subprocess.run(["pip", "install", "numpy==1.23.5"], check=True)
-
 import streamlit as st
 import numpy as np
 import joblib
 import os
 import base64
-from pygam import LinearGAM  # Importamos el modelo GAM
+from pygam import LinearGAM
 
 # Cargar el modelo GAM
 modelo_path = "modelo_GAM.pkl"  # Asegúrate de que el archivo está en el directorio correcto
@@ -78,3 +72,4 @@ if st.button("Realizar Predicción"):
         result = make_prediction(tcm, rendimiento, toneladas_jugo)
         if result is not None:
             st.success(f"La predicción de producción es: {result:.2f} sacos.")
+

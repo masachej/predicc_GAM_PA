@@ -1,16 +1,16 @@
 import numpy as np
-# Aplicar monkey patch para evitar el error de np.int
-if not hasattr(np, 'int'):
-    np.int = int
-
 import streamlit as st
 import joblib
 import os
 import base64
 from pygam import LinearGAM
 
+# Aplicar monkey patch para evitar error de np.int
+if not hasattr(np, 'int'):
+    np.int = int
+
 # Cargar el modelo GAM
-modelo_path = "modelo_GAM.pkl"  # Asegúrate de que el archivo está en el directorio correcto
+modelo_path = "modelo_GAM.pkl"
 if os.path.exists(modelo_path):
     modelo_gam = joblib.load(modelo_path)
 else:
@@ -28,9 +28,22 @@ def make_prediction(tcm, rendimiento, toneladas_jugo):
     try:
         # Preparar los datos de entrada
         data = np.array([[tcm, rendimiento, toneladas_jugo]])
-        data_scaled = scaler.transform(data)  # Escalar los datos
-        prediction = modelo_gam.predict(data_scaled)  # Hacer la predicción
-        return prediction[0]  # Devolver la predicción como un solo valor
+        print("Datos originales:", data)
+
+        # Escalar los datos
+        data_scaled = scaler.transform(data)
+        print("Datos escalados:", data_scaled)
+
+        # Hacer la predicción
+        prediction_log = modelo_gam.predict(data_scaled)
+        print("Predicción en escala logarítmica:", prediction_log)
+
+        # Aplicar transformación inversa (exponencial)
+        prediction_real = np.exp(prediction_log)  # Revertir la transformación logarítmica
+        print("Predicción real desescalada:", prediction_real)
+
+        return prediction_real[0]  # Retornar la predicción corregida
+
     except Exception as e:
         st.error(f"Ocurrió un error en la predicción: {e}")
         return None

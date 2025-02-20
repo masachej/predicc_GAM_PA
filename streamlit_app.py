@@ -1,5 +1,9 @@
-import streamlit as st
 import numpy as np
+# Aplicar monkey patch para evitar el error de np.int
+if not hasattr(np, 'int'):
+    np.int = int
+
+import streamlit as st
 import joblib
 import os
 import base64
@@ -72,4 +76,3 @@ if st.button("Realizar Predicción"):
         result = make_prediction(tcm, rendimiento, toneladas_jugo)
         if result is not None:
             st.success(f"La predicción de producción es: {result:.2f} sacos.")
-

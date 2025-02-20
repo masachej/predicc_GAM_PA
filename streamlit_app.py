@@ -1,51 +1,67 @@
 import streamlit as st
-import joblib
-import numpy as np
-import os
-from pygam import LinearGAM  # Asegurarse de que se importa correctamente
+import joblib  # Para cargar el escalador
+import numpy as np  # Para trabajar con arrays
+import os  # Para verificar la existencia del archivo
+import base64  # Para codificar la imagen en base64
 
-# Ruta del modelo
-modelo_path = "modelo_GAM.pkl"
+# Cargar el modelo GAM
+gam = joblib.load('modelo_GAM.pkl')
 
-# Verificar si el modelo existe y cargarlo
-gam = None
-if os.path.exists(modelo_path):
-    try:
-        gam = joblib.load(modelo_path)
-        if not hasattr(gam, 'predict'):
-            raise ValueError("El modelo cargado no es un modelo GAM válido.")
-    except Exception as e:
-        st.error(f"Error al cargar el modelo: {e}")
+# Cargar el escalador (asegúrate de tener el archivo 'scaler.pkl' en el mismo directorio)
+scaler = joblib.load('scaler.pkl')
+
+# Función para realizar la predicción con GAM
+def make_prediction(tcm, rendimiento, toneladas_jugo):
+    # Escalar los datos de entrada usando el mismo escalador
+    data = np.array([[tcm, rendimiento, toneladas_jugo]])
+    data_scaled = scaler.transform(data)  # Escalar los datos de entrada
+    prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
+    prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original
+    return prediction[0]  # Devolver la predicción
+
+# Cargar el logo
+logo_path = "logom.png"  # Cambia a la ruta correcta si es necesario
+if os.path.exists(logo_path):
+    # Codificar la imagen en base64
+    with open(logo_path, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+    
+    # Usar HTML para centrar el logo
+    st.markdown(
+        f'<div style="text-align: center;"><img src="data:image/png;base64,{encoded_image}" width="300"></div>', 
+        unsafe_allow_html=True
+    )
 else:
-    st.error("El archivo del modelo no se encontró. Asegúrate de que 'modelo_GAM.pkl' esté en el directorio correcto.")
+    st.warning("El logo no se encontró. Asegúrate de que el archivo esté en el directorio correcto.")
 
-# Título de la aplicación
-st.title("Predicción de Producción de Azúcar con GAM")
-st.subheader("Ingrese los valores para obtener la predicción")
+# Título principal
+st.title("MONTERREY AZUCARERA LOJANA")
+# Título secundario
+st.subheader("Predicción de la Producción de Azúcar")
 
-# Entradas de datos con validación básica
-tcm = st.number_input("Toneladas Caña Molida (TCM)", min_value=0.0, value=50.0, step=0.1)
-rendimiento = st.number_input("Rendimiento (kg/TCM)", min_value=0.0, value=10.0, step=0.1)
-toneladas_jugo = st.number_input("Toneladas de Jugo (ton)", min_value=0.0, value=100.0, step=0.1)
+# Texto explicativo sobre la utilidad del aplicativo
+st.write("""
+Este aplicativo permite predecir la producción de azúcar a partir de tres variables clave: Toneladas Caña Molida (TCM), Rendimiento y Toneladas de Jugo.
+La herramienta es útil para los profesionales e ingenieros azucareros de la empresa, facilitando la toma de decisiones informadas basadas en datos.
+""")
 
-# Validar que las entradas sean mayores que cero
-if tcm <= 0 or rendimiento <= 0 or toneladas_jugo <= 0:
-    st.error("Los valores deben ser mayores que cero.")
-else:
-    # Botón para realizar la predicción
-    if st.button("Realizar Predicción"):
-        if gam is None:
-            st.error("No se puede realizar la predicción porque el modelo no está cargado.")
-        else:
-            try:
-                # Preparar datos de entrada
-                X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
-                
-                # Realizar predicción con el modelo GAM
-                y_pred_log = gam.predict(X_nuevo)  # Predicción en escala logarítmica
-                y_pred = np.expm1(y_pred_log)  # Convertir de logaritmo a escala original
-                
-                # Mostrar la predicción
-                st.success(f"La predicción de producción es: {y_pred[0]:.2f} sacos.")
-            except Exception as e:
-                st.error(f"Ocurrió un error al hacer la predicción: {e}")
+st.write("""
+La predicción se realiza mediante un algoritmo de Machine Learning, utilizando un modelo Generalized Additive Model (GAM) entrenado con datos históricos diarios de producción azucarera del Ingenio Azucarero Monterrey C.A.
+""")
+
+st.write("""
+Ingrese los valores en los campos a continuación para obtener una estimación de la producción de azúcar en sacos.
+""")
+
+# Entrada de datos
+tcm = st.number_input("Ingrese el valor de Toneladas Caña Molida (ton)", min_value=0.0, value=0.0, step=0.01)
+rendimiento = st.number_input("Ingrese el valor de Rendimiento (kg/TCM)", min_value=0.0, value=0.0, step=0.01)
+toneladas_jugo = st.number_input("Ingrese el valor de Toneladas de Jugo (ton)", min_value=0.0, value=0.0, step=0.01)
+
+# Botón para hacer la predicción
+if st.button("Realizar Predicción"):
+    if tcm == 0.0 or rendimiento == 0.0 or toneladas_jugo == 0.0:
+        st.warning("Por favor, ingrese valores mayores a 0 en todos los campos.")
+    else:
+        result = make_prediction(tcm, rendimiento, toneladas_jugo)
+        st.write(f"La predicción de producción es: {result:.2f} sacos.")  # Mostrar la predicción

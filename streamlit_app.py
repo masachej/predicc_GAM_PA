@@ -19,24 +19,74 @@ if os.path.exists(logo_path):
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
 
     st.markdown(
-        f'<div style="text-align: center;"><img src="data:image/png;base64,{encoded_image}" width="300"></div>',
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{encoded_image}" width="250" style="border-radius: 15px;">
+        </div>
+        """,
         unsafe_allow_html=True
     )
-else:
-    st.warning("El logo no se encontró. Asegúrate de que el archivo esté en el directorio correcto.")
+
+# --- Aplicar estilos CSS personalizados ---
+st.markdown("""
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+        }
+        .title {
+            text-align: center;
+            font-size: 36px;
+            color: #004d99;
+            font-weight: bold;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .stButton>button {
+            background-color: #004d99;
+            color: white;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .stButton>button:hover {
+            background-color: #003366;
+        }
+        .stNumberInput>div>div>input {
+            text-align: center;
+        }
+        .result-box {
+            background-color: #e6f2ff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #004d99;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- Interfaz de usuario en Streamlit ---
-st.title("MONTERREY AZUCARERA LOJANA")
-st.subheader("Predicción de Producción de Azúcar con GAM")
+st.markdown('<div class="title">MONTERREY AZUCARERA LOJANA</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Predicción de Producción de Azúcar con GAM</div>', unsafe_allow_html=True)
 
 st.write("""
 Ingrese los valores en los campos a continuación para obtener una estimación de la producción de azúcar en sacos.
 """)
 
-# --- Entradas del usuario ---
-tcm = st.number_input("Ingrese Tcm:", min_value=0.0, format="%.2f")
-rendimiento = st.number_input("Ingrese Rendimiento:", min_value=0.0, format="%.2f")
-toneladas_jugo = st.number_input("Ingrese Toneladas de Jugo:", min_value=0.0, format="%.2f")
+# --- Sección de entrada de datos ---
+col1, col2, col3 = st.columns(3)
+with col1:
+    tcm = st.number_input("Ingrese Tcm:", min_value=0.0, format="%.2f")
+with col2:
+    rendimiento = st.number_input("Ingrese Rendimiento:", min_value=0.0, format="%.2f")
+with col3:
+    toneladas_jugo = st.number_input("Ingrese Toneladas de Jugo:", min_value=0.0, format="%.2f")
 
 # --- Botón para predecir ---
 if st.button("Predecir Producción"):
@@ -49,5 +99,5 @@ if st.button("Predecir Producción"):
     # --- Invertir la transformación logarítmica ---
     y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
 
-    # --- Mostrar el resultado ---
-    st.success(f"⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos")
+    # --- Mostrar el resultado con diseño mejorado ---
+    st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)

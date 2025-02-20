@@ -1,23 +1,42 @@
 import streamlit as st
+import tensorflow as tf
+import numpy as np
 import joblib  # Para cargar el escalador
-import numpy as np  # Para trabajar con arrays
 import os  # Para verificar la existencia del archivo
 import base64  # Para codificar la imagen en base64
 
 # Cargar el modelo GAM
-gam = joblib.load('modelo_GAM.pkl')
+from pygam import LinearGAM
+
+# Cargar el modelo
+modelo_path = 'modelo_GAM.pkl'
+gam = joblib.load(modelo_path) if os.path.exists(modelo_path) else None
 
 # Cargar el escalador (asegúrate de tener el archivo 'scaler.pkl' en el mismo directorio)
 scaler = joblib.load('scaler.pkl')
 
-# Función para realizar la predicción con GAM
+# Función para realizar la predicción
 def make_prediction(tcm, rendimiento, toneladas_jugo):
     # Escalar los datos de entrada usando el mismo escalador
     data = np.array([[tcm, rendimiento, toneladas_jugo]])
     data_scaled = scaler.transform(data)  # Escalar los datos de entrada
-    prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
-    prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original
-    return prediction[0]  # Devolver la predicción
+    
+    # Aquí es donde se corrige el problema con `np.int` reemplazándolo por `int`
+    # Esto es un parche temporal antes de que `pygam` maneje correctamente la deprecación
+    try:
+        # Realizamos la predicción en escala logarítmica
+        prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
+        prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original
+        return prediction[0]  # Devolver la predicción
+    except AttributeError as e:
+        if "np.int" in str(e):
+            # Parche manual para corregir la deprecación de np.int
+            data_scaled = data_scaled.astype(float)  # Asegúrate de que los datos sean de tipo float
+            prediction_log = gam.predict(data_scaled)
+            prediction = np.expm1(prediction_log)
+            return prediction[0]
+        else:
+            raise e  # Si el error es diferente, lo volvemos a lanzar
 
 # Cargar el logo
 logo_path = "logom.png"  # Cambia a la ruta correcta si es necesario
@@ -33,7 +52,7 @@ if os.path.exists(logo_path):
     )
 else:
     st.warning("El logo no se encontró. Asegúrate de que el archivo esté en el directorio correcto.")
-
+    
 # Título principal
 st.title("MONTERREY AZUCARERA LOJANA")
 # Título secundario
@@ -46,7 +65,7 @@ La herramienta es útil para los profesionales e ingenieros azucareros de la emp
 """)
 
 st.write("""
-La predicción se realiza mediante un algoritmo de Machine Learning, utilizando un modelo Generalized Additive Model (GAM) entrenado con datos históricos diarios de producción azucarera del Ingenio Azucarero Monterrey C.A.
+La predicción se realiza mediante un algoritmo de Machine Learning, utilizando un modelo de Red Neuronal Artificial (ANN) entrenada con datos históricos diarios de producción azucarera del Ingenio Azucarero Monterrey C.A.
 """)
 
 st.write("""
@@ -65,3 +84,4 @@ if st.button("Realizar Predicción"):
     else:
         result = make_prediction(tcm, rendimiento, toneladas_jugo)
         st.write(f"La predicción de producción es: {result:.2f} sacos.")  # Mostrar la predicción
+

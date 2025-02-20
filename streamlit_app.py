@@ -1,14 +1,11 @@
 import streamlit as st
-import tensorflow as tf
 import numpy as np
 import joblib  # Para cargar el escalador
 import os  # Para verificar la existencia del archivo
 import base64  # Para codificar la imagen en base64
-
-# Cargar el modelo GAM
 from pygam import LinearGAM
 
-# Cargar el modelo
+# Cargar el modelo GAM
 modelo_path = 'modelo_GAM.pkl'
 gam = joblib.load(modelo_path) if os.path.exists(modelo_path) else None
 
@@ -21,22 +18,13 @@ def make_prediction(tcm, rendimiento, toneladas_jugo):
     data = np.array([[tcm, rendimiento, toneladas_jugo]])
     data_scaled = scaler.transform(data)  # Escalar los datos de entrada
     
-    # Aquí es donde se corrige el problema con `np.int` reemplazándolo por `int`
-    # Esto es un parche temporal antes de que `pygam` maneje correctamente la deprecación
-    try:
-        # Realizamos la predicción en escala logarítmica
-        prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
-        prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original
-        return prediction[0]  # Devolver la predicción
-    except AttributeError as e:
-        if "np.int" in str(e):
-            # Parche manual para corregir la deprecación de np.int
-            data_scaled = data_scaled.astype(float)  # Asegúrate de que los datos sean de tipo float
-            prediction_log = gam.predict(data_scaled)
-            prediction = np.expm1(prediction_log)
-            return prediction[0]
-        else:
-            raise e  # Si el error es diferente, lo volvemos a lanzar
+    # Convertir los datos a tipo float explícitamente (para evitar problemas con np.int)
+    data_scaled = data_scaled.astype(float)
+
+    # Realizamos la predicción en escala logarítmica
+    prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
+    prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original
+    return prediction[0]  # Devolver la predicción
 
 # Cargar el logo
 logo_path = "logom.png"  # Cambia a la ruta correcta si es necesario
@@ -84,4 +72,3 @@ if st.button("Realizar Predicción"):
     else:
         result = make_prediction(tcm, rendimiento, toneladas_jugo)
         st.write(f"La predicción de producción es: {result:.2f} sacos.")  # Mostrar la predicción
-

@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import joblib
 import os
 import base64
@@ -110,7 +111,7 @@ La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, un 
 """)
 
 # --- Selección del método de entrada de datos ---
-opcion = st.radio("¿Cómo deseas ingresar los datos?", options=["Ingresar datos manualmente", "Ingresar lista de datos en formato CSV"])
+opcion = st.radio("¿Cómo deseas ingresar los datos?", options=["Ingresar datos manualmente", "Subir archivo CSV o XLS"])
 
 if opcion == "Ingresar datos manualmente":
     # --- Entrada de datos manual ---
@@ -139,32 +140,48 @@ if opcion == "Ingresar datos manualmente":
             # --- Mostrar el resultado con un marco elegante ---
             st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
 
-elif opcion == "Ingresar lista de datos en formato CSV":
-    # --- Entrada de lista de datos en formato CSV ---
-    st.write("Ingrese una lista de datos separados por comas en formato CSV, por ejemplo:")
-    st.write("`1000, 45.2, 800` (donde 1000 es TCM, 45.2 es rendimiento, y 800 son toneladas de jugo).")
-    input_data = st.text_area("Lista de Datos (Formato CSV)", "")
+elif opcion == "Subir archivo CSV o XLS":
+    # --- Subir archivo ---
+    uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
 
-    # --- Botón para generar predicciones ---
-    if st.button("Generar Predicciones"):
-        if input_data.strip() == "":
-            st.warning("⚠️ Por favor ingrese datos en formato CSV.")
+    if uploaded_file is not None:
+        # --- Leer el archivo ---
+        if uploaded_file.name.endswith(".csv"):
+            data = pd.read_csv(uploaded_file)
         else:
-            try:
-                # --- Procesar los datos de entrada ---
-                rows = input_data.strip().split("\n")
-                data = [list(map(float, row.split(','))) for row in rows]
+            data = pd.read_excel(uploaded_file)
 
-                # --- Realizar predicciones ---
-                X_nuevo = np.array(data)
-                y_pred_log = gam.predict(X_nuevo)
+        # --- Verificar si tiene las columnas correctas ---
+        if set(["TCM", "Rendimiento", "Toneladas de Jugo"]).issubset(data.columns):
+            st.write("Archivo cargado correctamente. Realizando predicciones...")
 
-                # --- Invertir la transformación logarítmica ---
-                y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
+            # --- Preparar los datos de entrada ---
+            X_nuevo = data[["TCM", "Rendimiento", "Toneladas de Jugo"]].values
 
-                # --- Mostrar las predicciones ---
-                st.markdown(f'<div class="result-box">⚡ Predicciones de Producción: </div>', unsafe_allow_html=True)
-                for i, pred in enumerate(y_pred):
-                    st.markdown(f'**Entrada {i+1}:** {pred[0]:,.2f} sacos', unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"⚠️ Error al procesar los datos. Verifica el formato de entrada. Detalles: {str(e)}")
+            # --- Realizar predicciones ---
+            y_pred_log = gam.predict(X_nuevo)
+
+            # --- Invertir la transformación logarítmica ---
+            y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
+
+            # --- Agregar las predicciones al DataFrame ---
+            data["Predicción de Producción"] = y_pred
+
+            # --- Mostrar las primeras filas ---
+            st.write(data.head())
+
+            # --- Botón para descargar el archivo con las predicciones ---
+            @st.cache
+            def convert_df(df):
+                return df.to_csv(index=False).encode('utf-8')
+
+            csv = convert_df(data)
+
+            st.download_button(
+                label="Descargar archivo con predicciones",
+                data=csv,
+                file_name="predicciones_produccion.csv",
+                mime="text/csv"
+            )
+        else:
+            st.error("⚠️ El archivo debe contener las columnas: 'TCM', 'Rendimiento', 'Toneladas de Jugo'.")

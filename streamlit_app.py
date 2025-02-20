@@ -56,7 +56,7 @@ st.markdown("""
             font-weight: 500;
         }
         .stButton>button {
-            background-color: #1a73e8;
+            background-color: #8bc34a;  /* Verde suave */
             color: white;
             font-size: 18px;
             padding: 12px 20px;
@@ -66,7 +66,7 @@ st.markdown("""
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
         .stButton>button:hover {
-            background-color: #1558b3;
+            background-color: #689f38;  /* Verde más oscuro */
             transform: scale(1.05);
         }
         .stNumberInput>div>div>input {
@@ -109,28 +109,31 @@ Este aplicativo permite predecir la producción de azúcar a partir de tres vari
 La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, un enfoque de machine learning que permite capturar relaciones no lineales entre las variables de entrada y la producción de azúcar. Este modelo ha sido entrenado con datos históricos del Ingenio Azucarero Monterrey C.A. y proporciona estimaciones basadas en patrones observados en la producción diaria.
 """)
 
-# --- Sección de entrada de datos ---
-col1, col2, col3 = st.columns(3)
-with col1:
-    tcm = st.number_input("Ingrese Tcm:", min_value=0.0, format="%.2f")
-with col2:
-    rendimiento = st.number_input("Ingrese Rendimiento:", min_value=0.0, format="%.2f")
-with col3:
-    toneladas_jugo = st.number_input("Ingrese Toneladas de Jugo:", min_value=0.0, format="%.2f")
+# --- Entrada de datos en formato CSV ---
+st.write("Ingrese una lista de datos separados por comas en formato CSV, por ejemplo:")
+st.write("`1000, 45.2, 800` (donde 1000 es TCM, 45.2 es rendimiento, y 800 son toneladas de jugo).")
+input_data = st.text_area("Lista de Datos (Formato CSV)", "")
 
-# --- Botón para predecir ---
-if st.button("Predecir Producción"):
-    if tcm <= 0.0 or rendimiento <= 0.0 or toneladas_jugo <= 0.0:
-        st.warning("⚠️ Por favor, ingrese valores mayores a 0 en todos los campos antes de predecir.")
+# --- Botón para generar predicciones ---
+if st.button("Generar Predicciones"):
+    if input_data.strip() == "":
+        st.warning("⚠️ Por favor ingrese datos en formato CSV.")
     else:
-        # --- Preparar los datos de entrada ---
-        X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
+        try:
+            # --- Procesar los datos de entrada ---
+            rows = input_data.strip().split("\n")
+            data = [list(map(float, row.split(','))) for row in rows]
 
-        # --- Realizar la predicción ---
-        y_pred_log = gam.predict(X_nuevo)
+            # --- Realizar predicciones ---
+            X_nuevo = np.array(data)
+            y_pred_log = gam.predict(X_nuevo)
 
-        # --- Invertir la transformación logarítmica ---
-        y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
+            # --- Invertir la transformación logarítmica ---
+            y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
 
-        # --- Mostrar el resultado con un marco elegante ---
-        st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
+            # --- Mostrar las predicciones ---
+            st.markdown(f'<div class="result-box">⚡ Predicciones de Producción: </div>', unsafe_allow_html=True)
+            for i, pred in enumerate(y_pred):
+                st.markdown(f'**Entrada {i+1}:** {pred[0]:,.2f} sacos', unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"⚠️ Error al procesar los datos. Verifica el formato de entrada. Detalles: {str(e)}")

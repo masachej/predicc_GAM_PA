@@ -15,12 +15,9 @@ scaler = joblib.load('scaler.pkl')
 # Función para realizar la predicción
 def make_prediction(tcm, rendimiento, toneladas_jugo):
     # Escalar los datos de entrada usando el mismo escalador
-    data = np.array([[tcm, rendimiento, toneladas_jugo]])
+    data = np.array([[tcm, rendimiento, toneladas_jugo]], dtype=np.float64)  # Aseguramos que el tipo es float64
     data_scaled = scaler.transform(data)  # Escalar los datos de entrada
     
-    # Convertir los datos a tipo float explícitamente (para evitar problemas con np.int)
-    data_scaled = data_scaled.astype(float)
-
     # Realizamos la predicción en escala logarítmica
     prediction_log = gam.predict(data_scaled)  # Hacer la predicción en escala logarítmica
     prediction = np.expm1(prediction_log)  # Convertir de logaritmo a escala original

@@ -90,14 +90,17 @@ with col3:
 
 # --- Botón para predecir ---
 if st.button("Predecir Producción"):
-    # --- Preparar los datos de entrada ---
-    X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
+    if tcm <= 0.0 or rendimiento <= 0.0 or toneladas_jugo <= 0.0:
+        st.warning("⚠️ Por favor, ingrese valores mayores a 0 en todos los campos antes de predecir.")
+    else:
+        # --- Preparar los datos de entrada ---
+        X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
 
-    # --- Realizar la predicción ---
-    y_pred_log = gam.predict(X_nuevo)
+        # --- Realizar la predicción ---
+        y_pred_log = gam.predict(X_nuevo)
 
-    # --- Invertir la transformación logarítmica ---
-    y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
+        # --- Invertir la transformación logarítmica ---
+        y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
 
-    # --- Mostrar el resultado con diseño mejorado ---
-    st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
+        # --- Mostrar el resultado con diseño mejorado ---
+        st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)

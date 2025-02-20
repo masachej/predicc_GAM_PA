@@ -4,3 +4,5 @@ scikit-learn
 numpy
 pandas
 pygam
+numpy>=1.20
+pygam>=0.8

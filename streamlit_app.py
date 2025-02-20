@@ -31,7 +31,7 @@ def make_prediction(tcm, rendimiento, toneladas_jugo):
         # Predecir en escala logarítmica
         prediction_log = modelo_gam.predict(data_scaled)
         
-        # Deshacer la transformación logarítmica
+        # **Invertir la transformación logarítmica**
         prediction = np.expm1(prediction_log[0])  # exp(x) - 1
 
         return prediction  # Devolver la predicción

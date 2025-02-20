@@ -5,6 +5,9 @@ import os
 import base64
 from pygam import LinearGAM
 
+# --- Configurar la pestaña e icono ---
+st.set_page_config(page_title="Predicción de Producción | MONTERREY", page_icon="🌱", layout="centered")
+
 # --- Cargar el modelo GAM entrenado ---
 modelo_path = "modelo_GAM.pkl"
 if os.path.exists(modelo_path):
@@ -21,7 +24,7 @@ if os.path.exists(logo_path):
     st.markdown(
         f"""
         <div style="text-align: center;">
-            <img src="data:image/png;base64,{encoded_image}" width="250" style="border-radius: 15px;">
+            <img src="data:image/png;base64,{encoded_image}" width="220" style="border-radius: 15px; margin-bottom: 20px;">
         </div>
         """,
         unsafe_allow_html=True
@@ -52,9 +55,11 @@ st.markdown("""
             font-size: 18px;
             padding: 10px;
             border-radius: 10px;
+            transition: 0.3s;
         }
         .stButton>button:hover {
             background-color: #003366;
+            transform: scale(1.05);
         }
         .stNumberInput>div>div>input {
             text-align: center;
@@ -67,6 +72,9 @@ st.markdown("""
             font-size: 22px;
             font-weight: bold;
             color: #004d99;
+            margin-top: 20px;
+            border: 2px solid #004d99;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -102,5 +110,5 @@ if st.button("Predecir Producción"):
         # --- Invertir la transformación logarítmica ---
         y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
 
-        # --- Mostrar el resultado con diseño mejorado ---
+        # --- Mostrar el resultado con un marco elegante ---
         st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)

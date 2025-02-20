@@ -2,40 +2,37 @@ import streamlit as st
 import joblib
 import numpy as np
 import os
+from pygam import LinearGAM  # Asegurar que se importa correctamente
 
-# --- Cargar el modelo GAM ---
+# Ruta del modelo
 modelo_path = "modelo_GAM.pkl"
+
+# Verificar si el modelo existe y cargarlo
+gam = None
 if os.path.exists(modelo_path):
     gam = joblib.load(modelo_path)
 else:
-    st.error("❌ El archivo 'modelo_GAM.pkl' no se encuentra en el directorio.")
-    st.stop()
+    st.error("El archivo del modelo no se encontró. Asegúrate de que 'modelo_GAM.pkl' esté en el directorio correcto.")
 
-# --- Función para hacer predicciones ---
-def make_prediction(tcm, rendimiento, toneladas_jugo):
-    try:
-        data = np.array([[tcm, rendimiento, toneladas_jugo]])  # Datos de entrada
-        prediction_log = gam.predict(data)  # Predicción en logaritmo
-        prediction = np.expm1(prediction_log)  # Convertir de log a valores reales
-        return prediction[0]
-    except Exception as e:
-        st.error(f"Error al hacer la predicción: {e}")
-        return None
-
-# --- Interfaz en Streamlit ---
+# Título de la aplicación
 st.title("Predicción de Producción de Azúcar con GAM")
-st.subheader("Ingrese los valores para obtener una predicción:")
+st.subheader("Ingrese los valores para obtener la predicción")
 
-# --- Entradas del usuario ---
-tcm = st.number_input("Toneladas Caña Molida (TCM)", min_value=0.0, value=0.0, step=0.01)
-rendimiento = st.number_input("Rendimiento (kg/TCM)", min_value=0.0, value=0.0, step=0.01)
-toneladas_jugo = st.number_input("Toneladas de Jugo (ton)", min_value=0.0, value=0.0, step=0.01)
+# Entradas de datos
+tcm = st.number_input("Toneladas Caña Molida (TCM)", min_value=0.0, value=50.0, step=0.1)
+rendimiento = st.number_input("Rendimiento (kg/TCM)", min_value=0.0, value=10.0, step=0.1)
+toneladas_jugo = st.number_input("Toneladas de Jugo (ton)", min_value=0.0, value=100.0, step=0.1)
 
-# --- Botón de predicción ---
+# Botón para realizar la predicción
 if st.button("Realizar Predicción"):
-    if tcm == 0.0 or rendimiento == 0.0 or toneladas_jugo == 0.0:
-        st.warning("⚠️ Por favor, ingrese valores mayores a 0 en todos los campos.")
+    if gam is None:
+        st.error("No se puede realizar la predicción porque el modelo no está cargado.")
     else:
-        result = make_prediction(tcm, rendimiento, toneladas_jugo)
-        if result is not None:
-            st.success(f"✅ Predicción de producción: {result:.2f} sacos.")
+        # Preparar datos de entrada
+        X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
+        
+        # Realizar predicción con el modelo GAM
+        y_pred_log = gam.predict(X_nuevo)  # Predicción en escala logarítmica
+        y_pred = np.expm1(y_pred_log)  # Convertir de logaritmo a escala original
+        
+        st.success(f"La predicción de producción es: {y_pred[0]:.2f} sacos.")

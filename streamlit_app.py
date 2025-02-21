@@ -111,7 +111,7 @@ La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, un 
 """)
 
 # --- Selección del método de entrada de datos ---
-opcion = st.radio("¿Cómo deseas ingresar los datos?", options=["Ingresar datos manualmente", "Subir archivo .csv o .xls"])
+opcion = st.radio("¿Cómo deseas ingresar los datos?", options=["Ingresar datos manualmente", "Subir archivo CSV o XLS"])
 
 if opcion == "Ingresar datos manualmente":
     # --- Entrada de datos manual ---
@@ -144,7 +144,7 @@ elif opcion == "Subir archivo CSV o XLS":
     # --- Subir archivo ---
     st.write("""
     **Instrucciones para el archivo:**
-    - El archivo debe ser de tipo **.csv** o **.xls**.
+    - El archivo debe ser de tipo **CSV** o **XLS**.
     - Debe contener las siguientes columnas: 
         - **TCM**: Toneladas Caña Molida
         - **Rendimiento**: Rendimiento en kg/TCM

@@ -70,7 +70,7 @@ st.markdown("""
             font-weight: 500;
         }
         .stButton>button {
-            background-color: #8bc34a;  /* Verde suave */
+            background-color: #8bc34a;
             color: white;
             font-size: 18px;
             padding: 12px 20px;
@@ -80,7 +80,7 @@ st.markdown("""
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
         .stButton>button:hover {
-            background-color: #689f38;  /* Verde más oscuro */
+            background-color: #689f38;
             transform: scale(1.05);
         }
         .stNumberInput>div>div>input {
@@ -120,9 +120,9 @@ Este aplicativo permite predecir la producción de azúcar a partir de tres vari
 - **Rendimiento (kg/TCM)**
 - **Toneladas de Jugo**
 
-La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, un enfoque de machine learning que permite capturar relaciones no lineales entre las variables de entrada y la producción de azúcar. Este modelo ha sido entrenado con datos históricos del Ingenio Azucarero Monterrey C.A. y proporciona estimaciones basadas en patrones observados en la producción diaria.
+La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, el cual ha sido entrenado con datos históricos del Ingenio Azucarero Monterrey C.A. y permite capturar relaciones no lineales entre las variables de entrada y la producción de azúcar.
 
-**Opcional:** Si el archivo incluye una columna adicional llamada **Produccion Real**, se calculará el R2 Score comparando estos valores con las predicciones.
+**Opcional:** Si el archivo incluye una columna llamada **Produccion Real**, se calculará el R2 Score comparando las predicciones del modelo con los valores reales.
 """)
 
 # --- Selección del método de entrada de datos ---
@@ -133,7 +133,7 @@ if opcion == "Ingresar datos manualmente":
     # --- Entrada de datos manual ---
     col1, col2, col3 = st.columns(3)
     with col1:
-        tcm = st.number_input("Ingrese Tcm:", min_value=0.0, format="%.2f")
+        tcm = st.number_input("Ingrese TCM:", min_value=0.0, format="%.2f")
     with col2:
         rendimiento = st.number_input("Ingrese Rendimiento:", min_value=0.0, format="%.2f")
     with col3:
@@ -150,7 +150,7 @@ if opcion == "Ingresar datos manualmente":
                 st.error("Los datos ingresados contienen valores inválidos (NaN o Inf).")
             else:
                 y_pred_log = gam.predict(X_nuevo)
-                y_pred = np.expm1(y_pred_log)  # Invertir transformación logarítmica
+                y_pred = np.expm1(y_pred_log)
                 st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
 
 elif opcion == "Subir archivo CSV o XLS":
@@ -190,7 +190,7 @@ elif opcion == "Subir archivo CSV o XLS":
                 data["Prediccion de Produccion"] = y_pred
                 st.write(data.head())
                 
-                # Si el archivo contiene la columna 'Produccion Real', calcular el R2 Score
+                # Calcular el R2 Score comparando el modelo con los valores reales, si la columna existe
                 if "Produccion Real" in data.columns:
                     r2 = r2_score(data["Produccion Real"], y_pred)
                     st.write(f"**R2 Score:** {r2:.2f}")
@@ -216,6 +216,6 @@ elif opcion == "Subir archivo CSV o XLS":
                     st.download_button(
                         label="Descargar archivo con predicciones",
                         data=output,
-                        file_name=f"predicciones_produccion.xlsx",
+                        file_name="predicciones_produccion.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )

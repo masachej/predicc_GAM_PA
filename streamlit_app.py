@@ -9,6 +9,7 @@ import joblib
 import os
 import base64
 from pygam import LinearGAM
+from io import BytesIO
 
 # --- Configurar la pestaña e icono usando el logo ---
 logo_path = "logom.png"
@@ -161,8 +162,10 @@ elif opcion == "Subir archivo CSV o XLS":
     uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
     
     if uploaded_file is not None:
+        # Determinar la extensión del archivo
+        extension = uploaded_file.name.split('.')[-1].lower()
         # --- Leer el archivo ---
-        if uploaded_file.name.endswith(".csv"):
+        if extension == "csv":
             data = pd.read_csv(uploaded_file)
         else:
             data = pd.read_excel(uploaded_file)
@@ -183,14 +186,28 @@ elif opcion == "Subir archivo CSV o XLS":
                 data["Predicción de Producción"] = y_pred
                 st.write(data.head())
                 
-                @st.cache_data
-                def convert_df(df):
-                    return df.to_csv(index=False).encode('utf-8')
-                
-                csv = convert_df(data)
-                st.download_button(
-                    label="Descargar archivo con predicciones",
-                    data=csv,
-                    file_name="predicciones_produccion.csv",
-                    mime="text/csv"
-                )
+                # Descargar en el mismo formato que se cargó:
+                if extension == "csv":
+                    @st.cache_data
+                    def convert_df_to_csv(df):
+                        return df.to_csv(index=False).encode('utf-8')
+                    csv_data = convert_df_to_csv(data)
+                    st.download_button(
+                        label="Descargar archivo con predicciones",
+                        data=csv_data,
+                        file_name="predicciones_produccion.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    # Para Excel (xls o xlsx)
+                    output = BytesIO()
+                    # Usamos openpyxl como motor; para xls, se recomienda xlsxwriter o xlwt, pero aquí generamos .xlsx
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        data.to_excel(writer, index=False)
+                    output.seek(0)
+                    st.download_button(
+                        label="Descargar archivo con predicciones",
+                        data=output,
+                        file_name=f"predicciones_produccion.{extension if extension in ['xls', 'xlsx'] else 'xlsx'}",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )

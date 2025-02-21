@@ -112,7 +112,7 @@ st.markdown("""
 
 # --- Encabezado ---
 st.markdown('<div class="title">MONTERREY AZUCARERA LOJANA</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Predicción de Producción de Azúcar con GAM</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Predicción de Producción de Azúcar</div>', unsafe_allow_html=True)
 
 st.write("""
 Este aplicativo permite predecir la producción de azúcar a partir de tres variables clave:

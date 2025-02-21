@@ -122,9 +122,6 @@ Este aplicativo permite predecir la producción de azúcar a partir de tres vari
 
 La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, el cual ha sido entrenado con datos históricos del Ingenio Azucarero Monterrey C.A. y permite capturar relaciones no lineales entre las variables de entrada y la producción de azúcar.
 
-**Opcional:** Si el archivo incluye una columna llamada **Produccion Real**, se calculará el R2 Score comparando las predicciones del modelo con los valores reales.
-""")
-
 # --- Selección del método de entrada de datos ---
 opcion = st.radio("¿Cómo deseas ingresar los datos?", 
                    options=["Ingresar datos manualmente", "Subir archivo CSV o XLS"])
@@ -161,9 +158,7 @@ elif opcion == "Subir archivo CSV o XLS":
         - **TCM**: Toneladas Caña Molida
         - **Rendimiento**: Rendimiento en kg/TCM
         - **Toneladas de Jugo**: Toneladas de jugo obtenidas
-    - Opcionalmente, si incluye una columna **Produccion Real**, se calculará el R2 Score.
-    """)
-    uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
+       uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
     
     if uploaded_file is not None:
         # Determinar la extensión del archivo

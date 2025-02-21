@@ -137,9 +137,13 @@ if opcion == "Ingresar datos manualmente":
             st.warning("⚠️ Por favor, ingrese valores mayores a 0 en todos los campos antes de predecir.")
         else:
             X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
-            y_pred_log = gam.predict(X_nuevo)
-            y_pred = np.expm1(y_pred_log)  # Invertir transformación logarítmica
-            st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
+            # Verificar que no haya NaN o Inf en la entrada
+            if np.isnan(X_nuevo).any() or np.isinf(X_nuevo).any():
+                st.error("Los datos ingresados contienen valores inválidos (NaN o Inf).")
+            else:
+                y_pred_log = gam.predict(X_nuevo)
+                y_pred = np.expm1(y_pred_log)  # Invertir transformación logarítmica
+                st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
 
 elif opcion == "Subir archivo CSV o XLS":
     st.write("""
@@ -166,19 +170,24 @@ elif opcion == "Subir archivo CSV o XLS":
         else:
             st.write("Archivo cargado correctamente. Realizando predicciones...")
             X_nuevo = data[["TCM", "Rendimiento", "Toneladas de Jugo"]].values
-            y_pred_log = gam.predict(X_nuevo)
-            y_pred = np.expm1(y_pred_log)
-            data["Predicción de Producción"] = y_pred
-            st.write(data.head())
             
-            @st.cache
-            def convert_df(df):
-                return df.to_csv(index=False).encode('utf-8')
-            
-            csv = convert_df(data)
-            st.download_button(
-                label="Descargar archivo con predicciones",
-                data=csv,
-                file_name="predicciones_produccion.csv",
-                mime="text/csv"
-            )
+            # Verificar que los datos no contengan NaN o Inf
+            if np.isnan(X_nuevo).any() or np.isinf(X_nuevo).any():
+                st.error("El archivo contiene valores faltantes o inválidos (NaN o Inf). Por favor, verifica tus datos.")
+            else:
+                y_pred_log = gam.predict(X_nuevo)
+                y_pred = np.expm1(y_pred_log)
+                data["Predicción de Producción"] = y_pred
+                st.write(data.head())
+                
+                @st.cache
+                def convert_df(df):
+                    return df.to_csv(index=False).encode('utf-8')
+                
+                csv = convert_df(data)
+                st.download_button(
+                    label="Descargar archivo con predicciones",
+                    data=csv,
+                    file_name="predicciones_produccion.csv",
+                    mime="text/csv"
+                )

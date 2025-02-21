@@ -11,9 +11,17 @@ logo_path = "logom.png"
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-    st.set_page_config(page_title="Predicción de Producción | MONTERREY", page_icon=f"data:image/png;base64,{encoded_image}", layout="centered")
+    st.set_page_config(
+        page_title="Predicción de Producción | MONTERREY",
+        page_icon=f"data:image/png;base64,{encoded_image}",
+        layout="centered"
+    )
 else:
-    st.set_page_config(page_title="Predicción de Producción | MONTERREY", page_icon="🌱", layout="centered")
+    st.set_page_config(
+        page_title="Predicción de Producción | MONTERREY",
+        page_icon="🌱",
+        layout="centered"
+    )
 
 # --- Cargar el modelo GAM entrenado ---
 modelo_path = "modelo_GAM.pkl"
@@ -26,7 +34,6 @@ else:
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-
     st.markdown(
         f"""
         <div style="text-align: center;">
@@ -97,9 +104,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Interfaz de usuario en Streamlit ---
+# --- Encabezado ---
 st.markdown('<div class="title">MONTERREY AZUCARERA LOJANA</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Predicción de Producción de Azúcar</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Predicción de Producción de Azúcar con GAM</div>', unsafe_allow_html=True)
 
 st.write("""
 Este aplicativo permite predecir la producción de azúcar a partir de tres variables clave:
@@ -111,7 +118,8 @@ La predicción se realiza mediante un **Modelo Aditivo Generalizado (GAM)**, un 
 """)
 
 # --- Selección del método de entrada de datos ---
-opcion = st.radio("¿Cómo deseas ingresar los datos?", options=["Ingresar datos manualmente", "Subir archivo CSV o XLS"])
+opcion = st.radio("¿Cómo deseas ingresar los datos?", 
+                   options=["Ingresar datos manualmente", "Subir archivo CSV o XLS"])
 
 if opcion == "Ingresar datos manualmente":
     # --- Entrada de datos manual ---
@@ -128,69 +136,49 @@ if opcion == "Ingresar datos manualmente":
         if tcm <= 0.0 or rendimiento <= 0.0 or toneladas_jugo <= 0.0:
             st.warning("⚠️ Por favor, ingrese valores mayores a 0 en todos los campos antes de predecir.")
         else:
-            # --- Preparar los datos de entrada ---
             X_nuevo = np.array([[tcm, rendimiento, toneladas_jugo]])
-
-            # --- Realizar la predicción ---
             y_pred_log = gam.predict(X_nuevo)
-
-            # --- Invertir la transformación logarítmica ---
-            y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
-
-            # --- Mostrar el resultado con un marco elegante ---
+            y_pred = np.expm1(y_pred_log)  # Invertir transformación logarítmica
             st.markdown(f'<div class="result-box">⚡ Predicción de Producción: {y_pred[0]:,.2f} sacos</div>', unsafe_allow_html=True)
 
 elif opcion == "Subir archivo CSV o XLS":
-    # --- Subir archivo ---
     st.write("""
     **Instrucciones para el archivo:**
-    - El archivo debe ser de tipo **CSV** o **XLS**.
+    - El archivo debe ser de tipo **.csv** o **xls**.
     - Debe contener las siguientes columnas: 
         - **TCM**: Toneladas Caña Molida
         - **Rendimiento**: Rendimiento en kg/TCM
         - **Toneladas de Jugo**: Toneladas de jugo obtenidas
     """)
-    
     uploaded_file = st.file_uploader("Sube tu archivo CSV o XLS", type=["csv", "xls", "xlsx"])
-
+    
     if uploaded_file is not None:
         # --- Leer el archivo ---
         if uploaded_file.name.endswith(".csv"):
             data = pd.read_csv(uploaded_file)
         else:
             data = pd.read_excel(uploaded_file)
-
-        # --- Verificar si tiene las columnas correctas ---
-        if set(["TCM", "Rendimiento", "Toneladas de Jugo"]).issubset(data.columns):
+            
+        # --- Verificar si tiene las columnas requeridas ---
+        required_columns = ["TCM", "Rendimiento", "Toneladas de Jugo"]
+        if not set(required_columns).issubset(data.columns):
+            st.error("⚠️ El archivo debe contener las columnas: 'TCM', 'Rendimiento', 'Toneladas de Jugo'")
+        else:
             st.write("Archivo cargado correctamente. Realizando predicciones...")
-
-            # --- Preparar los datos de entrada ---
             X_nuevo = data[["TCM", "Rendimiento", "Toneladas de Jugo"]].values
-
-            # --- Realizar predicciones ---
             y_pred_log = gam.predict(X_nuevo)
-
-            # --- Invertir la transformación logarítmica ---
-            y_pred = np.expm1(y_pred_log)  # np.expm1() invierte np.log1p()
-
-            # --- Agregar las predicciones al DataFrame ---
+            y_pred = np.expm1(y_pred_log)
             data["Predicción de Producción"] = y_pred
-
-            # --- Mostrar las primeras filas ---
             st.write(data.head())
-
-            # --- Botón para descargar el archivo con las predicciones ---
+            
             @st.cache
             def convert_df(df):
                 return df.to_csv(index=False).encode('utf-8')
-
+            
             csv = convert_df(data)
-
             st.download_button(
                 label="Descargar archivo con predicciones",
                 data=csv,
                 file_name="predicciones_produccion.csv",
                 mime="text/csv"
             )
-        else:
-            st.error("⚠️ El archivo debe contener las columnas: 'TCM', 'Rendimiento', 'Toneladas de Jugo'.")

@@ -1,5 +1,9 @@
 import streamlit as st
 import numpy as np
+# Solución para el error de np.int en versiones recientes de NumPy
+if not hasattr(np, 'int'):
+    np.int = int
+
 import pandas as pd
 import joblib
 import os
@@ -170,7 +174,6 @@ elif opcion == "Subir archivo CSV o XLS":
         else:
             st.write("Archivo cargado correctamente. Realizando predicciones...")
             X_nuevo = data[["TCM", "Rendimiento", "Toneladas de Jugo"]].values
-            
             # Verificar que los datos no contengan NaN o Inf
             if np.isnan(X_nuevo).any() or np.isinf(X_nuevo).any():
                 st.error("El archivo contiene valores faltantes o inválidos (NaN o Inf). Por favor, verifica tus datos.")
